@@ -576,14 +576,18 @@ void BatteryMonitor::updateValues(void) {
             // Look for "type" file in each subdirectory
             path.clear();
             path.appendFormat("%s/%s/type", POWER_SUPPLY_SYSFS_PATH, name);
-            switch(readPowerSupplyType(path)) {
+            switch(readPowerSupplyType(path, name)) {
             case ANDROID_POWER_SUPPLY_TYPE_AC:
             case ANDROID_POWER_SUPPLY_TYPE_USB:
             case ANDROID_POWER_SUPPLY_TYPE_WIRELESS:
                 path.clear();
                 path.appendFormat("%s/%s/online", POWER_SUPPLY_SYSFS_PATH, name);
-                if (access(path.c_str(), R_OK) == 0)
-                    mChargerNames.add(String8(name));
+                if (access(path.c_str(), R_OK) == 0) {
+                    const auto [_it, inserted] = mChargerNames.insert(name);
+                    if (inserted) {
+                        KLOG_INFO(LOG_TAG, "Discovered new charger device %s", name);
+                    }
+                }
                 break;
             default:
                 break;
